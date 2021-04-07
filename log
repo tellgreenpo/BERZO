@@ -1,0 +1,18 @@
+Premier TP:
+Aucune idee de comment garder les socket en variable globale
+pour la fonction mic_tcp_send() ==> mic_sock est lfd du socket destination ou du socket source?
+Si c'est le socket destiantion pas de soucis je crois mais si c'est le socket source comment je connais la destination???
+
+Déclaration variable globlae ==> tableau de deux type mic_tcp_sock
+modification des deux premieres fonctions
+
+
+Version 1 terminée solution au probleme ==> muavaise utilisation des arguments lors de l'appel
+
+Go version 2 maintenant
+
+A coder :
+    mic_tcp_connect ==> com addr socket distant askip on s'occupe pas du source
+    mic_tcp_send ==> mecanisme de reprises de pertes
+    mic_tcp_recv ==> ack
+    process_received ==> traiter les donnees ==>modification du expected
