@@ -1,5 +1,6 @@
 #include <mictcp.h>
 #include <api/mictcp_core.h>
+#define MAXLOSS 20
 
 
 // tableau de 1 socket destination et 1 socket source??
@@ -8,6 +9,83 @@ mic_tcp_sock tabSocket[2];
 
 // les seq
 int PA,PE;
+
+// compteur pour transmission reussie
+int compteur = 0;
+
+
+/* On peut utiliser une liste circulaire pour faire un fenetrage continu ?????? sans segmenter
+// Liste circulaire pour le fenetrage
+typedef struct Liste_circulaire {
+    char success;
+    Liste_circulaire * suiv;
+}Liste_circulaire;
+
+typedef struct Fenetre {
+    int countFailure;
+    Liste_circulaire * debut;
+}Fenetre;
+
+// Declaration variable globale pour le fenetrage
+Fenetre * debut;
+
+
+// Fonctions pour le fenetrage
+
+// Initialisation fenetre de taille 100
+int init_fenetre(Fenetre * pf){
+    pf->debut = (Liste_circulaire *)malloc(sizeof(Liste_circulaire));
+    Liste_circulaire * suiveur = pf->debut;
+    // Creation de 100 cellules
+    for (int i = 0 ; i<99;i++){
+        suiveur->succes = 1;
+        suiveur->suiv = (Liste_circulaire *)malloc(sizeof(Liste_circulaire));
+        suiveur = suiveur->suiv;
+    };
+    free(suiveur);
+    return 0;
+};
+
+// Retour du compte d'echec de transmission
+int moyenne(Fenetre *pf){
+    Liste_circulaire * suiveur = pf->debut;
+    if(suiveur->success == 0){
+        pf->countFailure += 1; 
+    }
+    suiveur = suiveur->suiv;
+    while (suiveur != pf->debut){
+        if(suiveur->success == 0){
+            pf->countFailure += 1; 
+        };
+        suiveur = suiveur->suiv;
+    }
+    free(suiveur);
+    return pf->countFailure;
+};
+
+// Ajout etat transmission
+int update(Liste_circulaire * suiveur, int resultat){
+    suiveur->success = resultat;
+    suiveur = suiveur->suiv;
+    return 0;
+};
+
+// Libération de la memoire
+int delete(Fenetre * pf){
+    Lsite_circulaire * suiveur = pf->debut;
+    Liste_circulaire * toDel = suiveur;
+    while(suiveur != pf->debut){
+        toDel  = suiveur;
+        suiveur = suiveur->suiv;
+        free(toDel)
+    };
+    free(suiveur);
+    free(pf);
+    return 0;
+}
+*
+*/
+
 
 
 /*
@@ -98,7 +176,8 @@ int mic_tcp_send (int mic_sock, char* mesg, int mesg_size)
     mic_tcp_sock_addr addr;
     int recvResult;
 
-    // Tant que on reçoit pas l'ACK avec le bon on force
+    // Tant que on reçoit pas l'ACK avec le bon on force pour la v2
+    // On accepte la non reception d'ack ou du mauvais ack si perte acceptable
     while(0){
         recvResult = IP_recv(&ack,&addr,50);
         if (recvResult>0){
@@ -106,10 +185,22 @@ int mic_tcp_send (int mic_sock, char* mesg, int mesg_size)
                 // sucess
                 break;
             }else{
-                IP_send(pdu,addresse);
+                // mauvais ACK num
+                compteur = (compteur+1)%100;
+                if(compteur<MAXLOSS){
+                    break;
+                }else{
+                    IP_send(pdu,addresse);
+                };
             };
         }else{
-            IP_send(pdu,addresse);
+            // timer expiré
+            compteur = (compteur+1)%100;
+            if(compteur<MAXLOSS){
+                break;
+            }else{
+                IP_send(pdu,addresse);
+            };
         };
     };
     return size;
