@@ -1,4 +1,3 @@
-Premier TP:
 Aucune idee de comment garder les socket en variable globale
 pour la fonction mic_tcp_send() ==> mic_sock est lfd du socket destination ou du socket source?
 Si c'est le socket destiantion pas de soucis je crois mais si c'est le socket source comment je connais la destination???
@@ -23,8 +22,12 @@ MICTCP Version 2 fini
 
 
 Version 3:
+Fenetrage initial a faire mais marche bof bof
+Fenetrage fini
+tsock_texte fonctionne correctement
+Fonctionnement correct de la video meme si elle bugg beaucoup
+
 
 A faire:
 
-Fenetrage on check les 100 dernieres et on regarde si on peut laisser passer
-Faire variable globale comparaison?
+Check l'evolution du compteur

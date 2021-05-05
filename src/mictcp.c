@@ -1,6 +1,7 @@
 #include <mictcp.h>
 #include <api/mictcp_core.h>
-#define MAXLOSS 20
+#include <limits.h>
+#define MAXLOSS 10
 
 
 // tableau de 1 socket destination et 1 socket source??
@@ -10,8 +11,9 @@ mic_tcp_sock tabSocket[2];
 // les seq
 int PA,PE;
 
-// compteur pour transmission reussie
+// compteur pour transmission rate
 int compteur = 0;
+int nbTransmission = 0;
 
 
 /* On peut utiliser une liste circulaire pour faire un fenetrage continu ?????? sans segmenter
@@ -50,7 +52,7 @@ int init_fenetre(Fenetre * pf){
 int moyenne(Fenetre *pf){
     Liste_circulaire * suiveur = pf->debut;
     if(suiveur->success == 0){
-        pf->countFailure += 1; 
+                    IP_send(pdu,addresse);pf->countFailure += 1; 
     }
     suiveur = suiveur->suiv;
     while (suiveur != pf->debut){
@@ -65,10 +67,7 @@ int moyenne(Fenetre *pf){
 
 // Ajout etat transmission
 int update(Liste_circulaire * suiveur, int resultat){
-    suiveur->success = resultat;
-    suiveur = suiveur->suiv;
-    return 0;
-};
+    suiveur-            IP_send(pdu,addresse);
 
 // Libération de la memoire
 int delete(Fenetre * pf){
@@ -97,7 +96,7 @@ int mic_tcp_socket(start_mode sm)
    int result = -1;
    printf("[MIC-TCP] Appel de la fonction: ");  printf(__FUNCTION__); printf("\n");
    result = initialize_components(sm); /* Appel obligatoire */
-   set_loss_rate(0);
+   set_loss_rate(1);
 
     // On range le nouveau socket crée dans la  variable globale
     tabSocket[id].fd = id;
@@ -180,28 +179,33 @@ int mic_tcp_send (int mic_sock, char* mesg, int mesg_size)
     // On accepte la non reception d'ack ou du mauvais ack si perte acceptable
     while(0){
         recvResult = IP_recv(&ack,&addr,50);
+        nbTransmission = (++nbTransmission)%100;
+        compteur = nbTransmission == 0 ? 0 : compteur;
         if (recvResult>0){
             if(ack.header.ack == 1 && ack.header.ack_num == PE){
                 // sucess
                 break;
             }else{
                 // mauvais ACK num
-                compteur = (compteur+1)%100;
+                compteur++;
                 if(compteur<MAXLOSS){
                     break;
                 }else{
                     IP_send(pdu,addresse);
+                    compteur = 0; // OU compteur--;
                 };
             };
         }else{
             // timer expiré
-            compteur = (compteur+1)%100;
+            compteur++;
             if(compteur<MAXLOSS){
                 break;
             }else{
                 IP_send(pdu,addresse);
+                compteur = 0; // OU compteur--;
             };
         };
+        printf("Compteur : %i",compteur);
     };
     return size;
 }
