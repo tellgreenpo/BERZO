@@ -205,7 +205,6 @@ int mic_tcp_send (int mic_sock, char* mesg, int mesg_size)
                 compteur = 0; // OU compteur--;
             };
         };
-        printf("Compteur : %i",compteur);
     };
     return size;
 }
